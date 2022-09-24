@@ -12,12 +12,30 @@ This project was developed using Python 3.9.7 and PyTorch 1.12.1. Additional det
 
 Link to the UBC-CIC website for Phase 2: [UBC-CIC L3-Net Version 2.0](https://cic.ubc.ca/project/open-source-ai-model-for-covid-19-ct-diagnostics-and-prognosis/version-2-0-current-open-source-ai-model-for-covid-19-ct-diagnostics-and-prognosis/)
 
-The phase 3 model, like the phase 2 model, is based on the 2D UNet. Weights were initialized with the phase 2 model weights but trained to output 5 classes:
+The phase 3 model, like the phase 2 model, is based on the 2D UNet. Phase 2 model weights were used to initialize phase 3 model training:
 - 0: Background
 - 1: Vessels
 - 2: Normal/Healthy Lung
 - 3: GGO/Crazy Paving
 - 4: Consolidation
+
+## Quick Start
+The trained model can be deployed from the command line or within a python script. In both cases, three paths are required:
+1. DICOM path
+    > The DICOM path should point to a folder of datasets, studies, or series. Both methods of deployment will search the provided path and infer on all identified CT series.
+    > Sample DICOM paths:
+    > `datasets/dataset_#/study_#/series_#/*.dcm` or `dataset_#/study_#/series_#/*.dcm` or `study_#/series_#/*.dcm` or `series_#/*.dcm`
+2. Save path
+    > Folder to save [Inference NPZ (Numpy Zipped Archive)](#inference-npz-numpy-zipped-archive) 
+3. Model path
+    > Path to model 3 checkpoint file (.ckpt)
+
+### Method 1 - Command-line
+    python infer.py --data_path path_to_dicoms  --output_dir output_path --checkpoint path_to_phase3_weights.ckpt
+
+### Method 2 - In a python script
+    from infer import infer_dicom
+    infer_dicom(model_weights=path_to_weights_ckpt, dicom_folder=dicom_directory, output_directory=output_directory)
 
 ## Overall Data Flow
 1. _Data Manager_: DICOMs uploaded to MD.ai
@@ -59,7 +77,6 @@ The core scripts are:
 - **evaluate.py**: evaluates phase 1, phase 2, and one or more phase 3 models at the same time against the train, validation, or test sets
 - **infer.py**: given a folder containing multiple DICOM studies, will apply phase 3 model for inference, and save into .npz file
     - A convenience script **inference_to_nii.py** can be used to convert the .npz inference file into NIFTI CT.nii.gz and Mask.nii.gz
-
 
 ## Execution
 The simplest way to deploy this project/repository is using Visual Code debugging, and running the launch configurations defined in ./.vscode/launch.json. Alternatively, scripts can be executed from command-line using argument-values specified in the launch.json file. The launch configurations can be separated into **Utilities**, **Data** and **Model** debugging/run configurations. 
@@ -145,6 +162,7 @@ To load an inference (ex. inference.npz):
 
     inferred = np.load('inference.npz')
     CT = inferred[in_]
+    probs = inferred[probs]
     outputs = inferred[out_]
     SOPInstanceUIDs = inferred[sops]
     class_labels = dict(enumerate(inferred['labels']))
@@ -155,3 +173,6 @@ To convert a .npz inference file into separate NIFTI files (CT, Mask), the **inf
 
     python3 inference_to_nii.py --inference_fp inference.npz
     python3 inference_to_nii.py --inference_fp inference.npz --output_dir output_folder
+
+
+

@@ -13,10 +13,7 @@ from src.datasets.phase3_dataset import Threshold
 import shutil
 import atexit
 
-MEAN = [-653.2204]
-STD = [628.5188]
 
-device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 Label_names = {0: 'bg',
                1: 'vessels',
@@ -25,10 +22,28 @@ Label_names = {0: 'bg',
                4: 'consolidation'}
 
 
-def infer_dcm(args, image_transform):
+def infer_dicom(model_weights, dicom_folder, output_directory, save_nifti=False, skip_existing=True):
+    # build the model and prepare functions
+    # Load model
+    device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+    net = SegmentorUNet2D(num_channels=1, num_classes=5, model_type='phase3', checkpoint=model_weights).to(device)
+
+    # Create transform
+    MEAN = [-653.2204]
+    STD = [628.5188]
+    image_transform = transforms.Compose([
+        Threshold(min=-1000, max=350),
+        transforms.ToPILImage(),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            mean=torch.tensor(MEAN),
+            std=torch.tensor(STD)
+        )
+    ])
+
     # extract tree structure of the input data path if dcm
     dir_tree = [[root, dirs, files] for root, dirs, files in
-                os.walk(args.data_path) if len(files) > 0]
+                os.walk(dicom_folder) if len(files) > 0]
 
     # walk the directory tree to pull a project_dir, study_dir, and series_dir (synonymous with uid). ignore lookup tables.
     series_paths = np.unique([dir_path[0] for dir_path in dir_tree if os.path.split(dir_path[0])[-1] != 'lookup.csv'])
@@ -39,7 +54,7 @@ def infer_dcm(args, image_transform):
         data_path, study_uid = os.path.split(study_path)
         print("[{}] Series {} of {}: Study {} - ".format(run_tools.datetime.now().strftime("%H:%M:%S"), sidx+1,len(series_paths), study_uid, series_uid), flush=True, end='')
         
-        save_path = args.output_dir
+        save_path = output_directory
         check_path = os.path.join(save_path, 'inference', study_uid, series_uid)
 
         # make sure series has more than one .dcm (otherwise, not a CT volume, and can skip)
@@ -47,7 +62,7 @@ def infer_dcm(args, image_transform):
             print("Skipping. Unlikely to be CT Volume.", flush=True)
             continue
 
-        if os.path.exists(check_path) and args.skip_existing:
+        if os.path.exists(check_path) and skip_existing:
             print("Skipping. Inference Folder Exists.", flush=True)
             continue
 
@@ -78,12 +93,13 @@ def infer_dcm(args, image_transform):
             np.savez_compressed(os.path.join(inference_path, "inference.npz"), 
                                 in_=dcm_series.pixel_data, 
                                 out_=np.argmax(probs.cpu().detach().numpy(),axis=1), 
+                                probs=probs.cpu().detach().numpy(),
                                 sops=dcm_series.sopinstanceuids, 
                                 labels=np.array(['bg','vessels','normal','ggo','consolidation']),
                                 slice_thickness=np.array(dcm_series.slice_thickness))
 
             # Generate NIFTI
-            if args.save_nii:
+            if save_nifti:
                 save_nii(inference_path, ct, probs, dcm_series.slice_thickness)
 
             series_msg = 'Success!\n'
@@ -99,7 +115,6 @@ if __name__ == '__main__':
     parser.add_argument('--num_classes', type=int, default=5)
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--verbose', '-v', type=general_utils.str2bool, default='false')
-    parser.add_argument('--multi_gpu', type=general_utils.str2bool, default='true')
     parser.add_argument('--checkpoint', type=str, default=r'model_in\phase3_model.ckpt')
     parser.add_argument('--save_nii', type=general_utils.str2bool, default='false')  # if true, will save nifti files in addition to .npz
     parser.add_argument('--skip_existing', type=general_utils.str2bool, default='true')
@@ -115,7 +130,6 @@ if __name__ == '__main__':
     parser.add_argument('--log_dir', type=str, default=os.environ.get('SM_OUTPUT_DATA_DIR', 'logs'))
 
     args = parser.parse_args()
-    args.multi_gpu = args.multi_gpu and (torch.cuda.device_count() > 1)
 
     if len(args.scheduled_start) > 0:
         scheduler = run_tools.RunScheduler(args.scheduled_start)
@@ -125,19 +139,4 @@ if __name__ == '__main__':
     timer.add_marker('Start')
     atexit.register(timer.exit_handler)
 
-    # Load model
-    net = SegmentorUNet2D(num_channels=1, num_classes=5, model_type='phase3', checkpoint=args.checkpoint).to(device)
-
-    # Create transform
-    image_transform = transforms.Compose([
-        Threshold(min=-1000, max=350),
-        transforms.ToPILImage(),
-        transforms.ToTensor(),
-        transforms.Normalize(
-            mean=torch.tensor(MEAN),
-            std=torch.tensor(STD)
-        )
-    ])
-
-    infer_fn = infer_dcm
-    infer_fn(args, image_transform)
+    infer_dicom(model_weights=args.checkpoint, dicom_folder=args.data_path, output_directory=args.output_dir, save_nifti=args.save_nii, skip_existing=args.skip_existing)
