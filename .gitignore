@@ -1,0 +1,11 @@
+/model_in/
+/model_out/
+/MRIcroGL (Nifti Viewer)/
+/.idea/
+/data_in/
+/data_out/
+*.pyc
+/__pycache__/
+/.vs
+.DS_Store
+/documents/
