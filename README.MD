@@ -178,5 +178,5 @@ To convert a .npz inference file into separate NIFTI files (CT, Mask), the **inf
 The key contributor to this repository is Marco Law. The COVID-19 L3-Net Phase 3 is based upon work from Phase 1 and 2, contributors being Keegan Lensink, Issam Laradji, and Marco Law.
 
 ## License
-
+This project is distributed under the [Apache License 2.0](LICENSE)
 
