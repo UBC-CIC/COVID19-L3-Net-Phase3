@@ -10,9 +10,7 @@ from src.utilities.infer_utils import DICOMSeries, save_nii
 from src.architecture.segmentor import SegmentorUNet2D
 from src.datasets.phase3_dataset import Threshold
 
-import shutil
 import atexit
-
 
 
 Label_names = {0: 'bg',
@@ -115,19 +113,17 @@ if __name__ == '__main__':
     parser.add_argument('--num_classes', type=int, default=5)
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--verbose', '-v', type=general_utils.str2bool, default='false')
-    parser.add_argument('--checkpoint', type=str, default=r'model_in\phase3_model.ckpt')
+    parser.add_argument('--checkpoint', type=str, default=None)
     parser.add_argument('--save_nii', type=general_utils.str2bool, default='false')  # if true, will save nifti files in addition to .npz
     parser.add_argument('--skip_existing', type=general_utils.str2bool, default='true')
     parser.add_argument('--scheduled_start', type=str, default="")
 
     # Container environment
     parser.add_argument('--data_path', '-d', type=str,
-                        default=os.environ.get('SM_CHANNEL_TRAINING',
-                                               r'C:\Users\Marco\PycharmProjects\cic_covid19_phase3\data_in\test_project'))
-    parser.add_argument('--model_dir', type=str, default=os.environ.get('SM_MODEL_DIR', 'model_in'))
-    parser.add_argument('--output_dir', type=str,
-                        default=os.environ.get('SM_OUTPUT_DATA_DIR', r'data_out'))
-    parser.add_argument('--log_dir', type=str, default=os.environ.get('SM_OUTPUT_DATA_DIR', 'logs'))
+                        default=None)
+    parser.add_argument('--model_dir', type=str, default=None)
+    parser.add_argument('--output_dir', type=str, default=None)
+    parser.add_argument('--log_dir', type=str, default=None)
 
     args = parser.parse_args()
 

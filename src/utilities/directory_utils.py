@@ -1,7 +1,6 @@
 import os
 import pandas as pd
 import argparse
-import shutil
 
 
 class UIDMapper:
@@ -35,7 +34,6 @@ class UIDMapper:
                 original_path = os.path.join(folder_path,uid)
                 new_path = os.path.join(folder_path,folder_name.values[0])
                 os.rename(original_path, new_path)
-
 
             print("Study folders truncated! See lookup.csv for new mappings")
         else:

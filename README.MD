@@ -1,4 +1,4 @@
-# UBC-CICxSapienML COVID-19 L3-Net: Phase 3
+# COVID-19 L3-Net: Phase 3
 ## Introduction
 This repository contains the development code for phase 3 of COVID-19 L3-Net, a machine learning model that detects areas of lung infection from axial slices of chest computed tomography (CT) images. This project is a collaboration between the University of British Columbia Cloud Innovation Centre (UBC-CIC), Amazon Web Services (AWS), and SapienML. Code and documentation for previous phases can be found in their own respective repositories. Data used to train is multinational, multi-site, and includes local data from Vancouver General Hospital and St. Paul's Hospital located in Vancouver, BC. This document will not discuss data specifics. 
 
@@ -174,5 +174,9 @@ To convert a .npz inference file into separate NIFTI files (CT, Mask), the **inf
     python3 inference_to_nii.py --inference_fp inference.npz
     python3 inference_to_nii.py --inference_fp inference.npz --output_dir output_folder
 
+## Contributors
+The key contributor to this repository is Marco Law. The COVID-19 L3-Net Phase 3 is based upon work from Phase 1 and 2, contributors being Keegan Lensink, Issam Laradji, and Marco Law.
+
+## License
 
 

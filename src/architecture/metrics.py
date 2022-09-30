@@ -6,9 +6,6 @@ import torch
 import torch.nn.functional as F
 
 
-
-
-
 class SegMonitor:
     def __init__(self, other_metrics=False):
         self.cf = None

@@ -333,9 +333,7 @@ def val_on_loader(net, dataloader, epoch, writer, make_plots, figs_dir):
 
 
 def test_on_loader(net, dataloader, epoch, writer, make_plots, figs_dir):
-    # n.b. if test_dl batch size > 1, the torchnet meters are average-over-batches, and not average of all samples.
     meters_metrics = {}
-    meters_confusion = meter.ConfusionMeter(k=5)
     meters_loss = meter.AverageValueMeter()
     meters_time = meter.TimeMeter(unit=False)
     net.eval()
@@ -383,10 +381,6 @@ def test_on_loader(net, dataloader, epoch, writer, make_plots, figs_dir):
     print(run_tools.timestamp() + 'Test {}: {:4d} | {} | teEPS: {:6.4f}'.format(key.upper(), epoch, metrics_msgs, eps), flush=True)
     print('Confusion Matrix')
     print(meters_metrics[key]['confusion'].value()[0])
-    
-    # NOT IMPLEMENTED
-    # print("Confusion Matrix:")
-    # print(meters_confusion.value())
 
     tb_iter = epoch + 1
     writer.add_scalar('test_loss', meters_loss.value()[0], tb_iter)
@@ -417,7 +411,7 @@ if __name__ == '__main__':
     parser.add_argument('--train_val', type=str2bool, default=True)
     parser.add_argument('--train_test', type=str2bool, default=True)
     parser.add_argument('--scheduled_start', type=str, default="")
-    parser.add_argument('--lungmask_model_path', type=str, default=r'model_in\unet_r231covid-0de78a7e.pth')
+    parser.add_argument('--lungmask_model_path', type=str, default=None)
     parser.add_argument('--checkpoint_phase1', type=str, default="")
     parser.add_argument('--checkpoint_phase2', type=str, default="", required=True)
     parser.add_argument('--checkpoint_phase3', type=str, default="")
@@ -440,22 +434,21 @@ if __name__ == '__main__':
     parser.add_argument('--test_phase3', type=str2bool, default=False)
 
     # Data Switches
-    parser.add_argument('--unlabeled_data_mode', type=str, default="a") # options: 'a', 'b', 'c' for leave as unlabeled, replace all as normal lung, replace unlabeled within GGO range as normal lung
+    parser.add_argument('--unlabeled_data_mode', type=str, default="c") # options: 'a', 'b', 'c' for leave as unlabeled, replace all as normal lung, replace unlabeled within GGO range as normal lung
     parser.add_argument('--verify_dataset_integrity', type=str2bool, default=False)
-    parser.add_argument('--thresh_hu_normal_lung', type=int, default=None)
-    parser.add_argument('--thresh_hu_consolidation', type=int, default=None)
-    parser.add_argument('--thresh_vesselness', type=float, default=None) # if -1, then calculate based on thresh_hu_consolidation and targets
+    parser.add_argument('--thresh_hu_normal_lung', type=int, default=-750)
+    parser.add_argument('--thresh_hu_consolidation', type=int, default=-350)
+    parser.add_argument('--thresh_vesselness', type=float, default=0.15) # if -1, then calculate based on thresh_hu_consolidation and targets
     parser.add_argument('--slice_thickness', type=str, default='all')
 
     # Debug Switches
     parser.add_argument('--val_as_test', type=str2bool, default=False)
 
     # Container environment
-    parser.add_argument('--data_search_path', '-d', type=str,
-                        default=os.environ.get('SM_CHANNEL_TRAINING'))
-    parser.add_argument('--model_dir', type=str, default=os.environ.get('SM_MODEL_DIR'))
-    parser.add_argument('--figs_dir', type=str, default=os.environ.get('SM_OUTPUT_DATA_DIR'))
-    parser.add_argument('--log_dir', type=str, default=os.environ.get('SM_OUTPUT_DATA_DIR'))
+    parser.add_argument('--data_search_path', '-d', type=str, default=None)
+    parser.add_argument('--model_dir', type=str, default=None)
+    parser.add_argument('--figs_dir', type=str, default=None)
+    parser.add_argument('--log_dir', type=str, default=None)
 
     args = parser.parse_args()
     

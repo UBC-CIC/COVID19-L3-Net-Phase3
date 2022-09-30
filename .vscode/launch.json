@@ -42,16 +42,16 @@
             "--hdf5_data_dir", "${workspaceFolder}/data_out/download/final-hessian_embedded/", // location of download.py output
         ]
         },
-        {   // Phase 3 Data --Phase 2 Model-> Phase 3 Data AI Inference HDF5
-            "name": "Phase 3 Data --Phase 2 Model-> Phase 3 Data AI Inference HDF5",
+        {   // Pre-label Data with Phase 2 Model
+            "name": "Pre-label Data with Phase 2 Model",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/pre_label.py",
             "console": "integratedTerminal",
             "args": [
                 // DATA
-                "--data_path", "${workspaceFolder}/data_in/dicom/A1", // VGH, SPH, VGH_ABO / [OPTIONAL STUDY FOLDER NAME], ... 
-                "--output_dir", "${workspaceFolder}/data_out/temp_infer/A1",  // TEST, SPH, VGH_ABO ...
+                "--data_path", "${workspaceFolder}/data_in/dicom/A1", // A1, A2, MG1 ... / [OPTIONAL STUDY FOLDER NAME], ... 
+                "--output_dir", "${workspaceFolder}/data_out/pre_label/A1",  // A1, A2, MG1 ...
                 // MODELS
                 "--checkpoint", "${workspaceFolder}/model_in/phase2_model.ckpt",
                 "--lung_model", "${workspaceFolder}/model_in/unet_r231covid-0de78a7e.pth",
@@ -67,8 +67,8 @@
                 "--scheduled_start", "0800"
             ]
         },
-        {   //  Phase 3 Data AI Inference --Upload-> MD.ai
-            "name": "Phase 3 AI Inference --Upload-> MD.ai",
+        {   // Upload Pre_labeled Masks to MD.ai
+            "name": "Upload Pre_labeled Masks to MD.ai",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/upload.py",
@@ -76,7 +76,7 @@
             "args": [
                 "--task", "phase2_inference",
                 // DATA
-                "--search_path", "${workspaceFolder}/data_out/temp_infer/MG10", // VGH, SPH, VGH_ABO / [OPTIONAL STUDY FOLDER NAME], ... for .HDF5
+                "--search_path", "${workspaceFolder}/data_out/pre_label/MG10", // A1, A2, MG1 ... / [OPTIONAL STUDY FOLDER NAME], ... for .HDF5
                 "--project_key", "phase3",
                 "--dataset_key", "mg10",  // ensure matches search_path dataset
                 // SWITCHES
@@ -86,8 +86,8 @@
                 "--process_normal_lung_by_hu", "true"
             ]
         },
-        {   // MD.ai Labels --Download-> Phase 3 All-in-One HDF5
-            "name": "MD.ai Labels --Download-> Phase 3 All-in-One HDF5",
+        {   // Download Final MD.ai Labels to HDF5
+            "name": "Download Final MD.ai Labels to HDF5",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/download.py",
@@ -106,8 +106,8 @@
                 "--scheduled_start", "1300"
             ]
         },
-        {   //  Phase 3 Ground Truth --Upload-> MD.ai
-            "name": "Phase 3 Ground Truth --Upload-> MD.ai",
+        {   //  Upload Final Post-processed Labels to MD.ai
+            "name": "Upload Final Post-processed Labels to MD.ai",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/upload.py",
@@ -128,18 +128,18 @@
             "args": [
                 // INITIAL MODEL
                 "--lungmask_model_path","${workspaceFolder}/model_in/unet_r231covid-0de78a7e.pth",
-                "--checkpoint_phase1", "${workspaceFolder}/model_in/phase1_model.ckpt",
+                "--checkpoint_phase1", "${workspaceFolder}/model_in/previous_phases/Phase 1.ckpt",
                 "--checkpoint_phase2", "${workspaceFolder}/model_in/previous_phases/Phase 2.ckpt",
-                "--checkpoint_phase3", "", //${workspaceFolder}/model_out/train/_/_/best_model-epoch0031.ckpt",
+                "--checkpoint_phase3", "", 
                 // DIRECTORIES
-                "--model_dir", "${workspaceFolder}/model_out/04-vesselness15_trainThin",
-                "--figs_dir", "${workspaceFolder}/data_out/train/04-vesselness15_trainThin/figs",
-                "--log_dir", "${workspaceFolder}/data_out/train/04-vesselness15_trainThin/logs",
+                "--model_dir", "${workspaceFolder}/model_out/03-vesselness15_threshold_tests",
+                "--figs_dir", "${workspaceFolder}/data_out/train/03-vesselness15_threshold_tests/figs",
+                "--log_dir", "${workspaceFolder}/data_out/train/03-vesselness15_threshold_tests/logs",
                 "--data_search_path", "${workspaceFolder}/data_out/download/final-hessian_embedded",
                 // CYCLE SETTINGS
                 "--reset_fc", "false", // reset the fully-connected layer 
                 "--num_workers", "10",
-                "--epochs", "60",  // default 30
+                "--epochs", "60",  // default 60
                 "--train_batch_size", "2",
                 "--val_batch_size", "2",
                 "--test_batch_size", "2",  
@@ -148,9 +148,9 @@
                 // PLOT SETTINGS
                 "--make_train_plots", "false",
                 "--make_val_plots", "false",
-                "--make_test_plots", "true",
+                "--make_test_plots", "false",
                 "--plot_quantitative", "false",
-                "--plot_qualitative", "true",
+                "--plot_qualitative", "false",
                 // PRE-TRAIN TEST SWITCHES
                 "--test_johof_lung", "false",
                 "--test_phase1", "false",
@@ -160,19 +160,19 @@
                 "--verify_dataset_integrity", "false", 
                 "--thresh_hu_normal_lung", "-750", // 800, 775, 750
                 "--thresh_hu_consolidation", "-350", // 400, 375, 350
-                "--thresh_vesselness", "0.15", // default 0.25
+                "--thresh_vesselness", "0.15", // default 0.15, 0.25 
                 "--unlabeled_data_mode", "c",
-                "--slice_thickness", "thin",
+                "--slice_thickness", "all",
                 // DEBUG SETTINGS
                 "--val_as_test", "true",  // only set to true for sample performance. set to false for actual training of phase 3 model
                 // SWITCHES - train_val and train_test execute only if train is also true
                 "--train", "true",
                 "--train_val", "true",
-                "--train_test", "true",
+                "--train_test", "false",
                 // OVERRIDES
                 "--override_run_code", "", // REMEMBER TO RESET
                 // DESCRIPTION
-                "--desc", "0.15c-trainThin",
+                "--desc", "",
                 // RUN SCHEDULE
                 "--scheduled_start", ""
             ]
@@ -186,22 +186,22 @@
             "args": [
                 // MODELS
                 "--lungmask_model_path","${workspaceFolder}/model_in/unet_r231covid-0de78a7e.pth",
-                "--phase3_models_search_path", "${workspaceFolder}/model_in/phase3/0.15c_trainThin",
+                "--phase3_models_search_path", "${workspaceFolder}/model_in/phase3",
                 "--other_models_search_path", "${workspaceFolder}/model_in/previous_phases",
                 "--model_filter", "", 
                 // DATA
                 "--data_search_path", "${workspaceFolder}/data_out/download/final-hessian_embedded",
                 "--output_dir", "${workspaceFolder}/data_out/evaluate/",
-                "--slice_thickness", "thin",
-                // DEBUG SETTINGS
-                "--val_as_test", "false",  
+                "--slice_thickness", "all",
+                "--data_use", "validate",  // train, validate, test
                 // RUN MODE
                 "--performance", "false",
-                "--visualize", "nii", // one of png, nii
+                "--visualize", "nii", // one of png, nii, or blank/none (to skip)
+                "--nii_save_npz", "true",
                 "--separate_figs", "false",
-                "--batch_size", "2", 
+                "--batch_size", "6", 
                 // DESCRIPTION
-                "--desc", "ThinTrain0.15C",
+                "--desc", "val_vis_test",
                 // RUN SCHEDULE
                 "--scheduled_start", ""
             ]
@@ -214,8 +214,8 @@
             "console": "integratedTerminal",
             "args": [
                 // DATA
-                "--data_path", "${workspaceFolder}/data_in/dicom/A1", // VGH, SPH, VGH_ABO / [OPTIONAL STUDY FOLDER NAME], ... 
-                "--output_dir", "${workspaceFolder}/data_out/infer/A1",  // TEST, SPH, VGH_ABO ...
+                "--data_path", "${workspaceFolder}/data_in/dicom/A1", // A1, A2, MG1 ... / [OPTIONAL STUDY FOLDER NAME], ... 
+                "--output_dir", "${workspaceFolder}/data_out/infer/A1",  // A1, A2, MG1 ...
                 // MODELS
                 "--checkpoint", "${workspaceFolder}/model_in/phase3/final_v0.15c/Phase 3-15C.ckpt",
                 // INFERENCE SETTINGS
@@ -226,8 +226,8 @@
                 "--scheduled_start", ""
             ]
         },
-        {   // Infer with Phase 3 Model
-            "name": "Inference to NIFTI",
+        {   // Convert NPZ inference file to Nifti 
+            "name": "Inference NPZ to NIFTI",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/infer.py",

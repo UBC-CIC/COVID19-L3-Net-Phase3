@@ -1,11 +1,9 @@
-from PIL import Image
 import numpy as np
 import os
 import torch
 from PIL import Image
 from PIL import ImageFont
 from PIL import ImageDraw 
-import nibabel as nib
 
 
 def image_orientation(dicom):

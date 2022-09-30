@@ -117,6 +117,7 @@ class SegmentorUNet2D(nn.Module):
         
         # calculate global accuracies, either all together and averaged across class
         metrics['global_acc'] = torchmetrics.functional.accuracy(labeled_prd, labeled_tgt, num_classes=classes, average='micro')
+        metrics['weighted_acc'] = torchmetrics.functional.accuracy(labeled_prd, labeled_tgt, num_classes=classes, average='weighted')
         metrics['avg_class_acc'] = torchmetrics.functional.accuracy(labeled_prd, labeled_tgt, num_classes=classes, average='macro')
 
         stat_scores = torchmetrics.functional.stat_scores(labeled_prd, labeled_tgt, reduce='macro', num_classes=5)[:,:-1] # [N-class, 4 (tp, fp, tn, fn)]
@@ -128,26 +129,27 @@ class SegmentorUNet2D(nn.Module):
         metrics['global_f1s'] = torch.div(2 * metrics['global_ppv'] * metrics['global_sen'], metrics['global_ppv'] + metrics['global_sen'])
 
         # calculate KLD
-        metrics['class_kld'] = torch.ones(classes)
-        for class_idx in range(0, classes):
-            if class_idx != 1:
-                flat_labels = torch.flatten(labels[:, class_idx])
-                keep_pixels = torch.where(flat_labels >= 0)[0]
-                flat_labels = torch.index_select(flat_labels, 0, keep_pixels)
-                labels_ = torch.zeros((flat_labels.shape[0], 2))
-                labels_[:, 1] = torch.round(flat_labels, decimals=5)
-                labels_[:, 0] = 1 - labels_[:, 1]
+        if False: # broken always outputs 1
+            metrics['class_kld'] = torch.ones(classes)
+            for class_idx in range(0, classes):
+                if class_idx != 1:
+                    flat_labels = torch.flatten(labels[:, class_idx])
+                    keep_pixels = torch.where(flat_labels >= 0)[0]
+                    flat_labels = torch.index_select(flat_labels, 0, keep_pixels)
+                    labels_ = torch.zeros((flat_labels.shape[0], 2))
+                    labels_[:, 1] = torch.round(flat_labels, decimals=5)
+                    labels_[:, 0] = 1 - labels_[:, 1]
 
-                flat_output = torch.index_select(torch.flatten(outputs[:, class_idx]),0,keep_pixels)
-                outputs_ = torch.zeros((flat_output.shape[0], 2))
-                outputs_[:, 1] = torch.round(flat_output, decimals=5)  
-                outputs_[:, 0] = 1 - outputs_[:, 1]
+                    flat_output = torch.index_select(torch.flatten(outputs[:, class_idx]),0,keep_pixels)
+                    outputs_ = torch.zeros((flat_output.shape[0], 2))
+                    outputs_[:, 1] = torch.round(flat_output, decimals=5)  
+                    outputs_[:, 0] = 1 - outputs_[:, 1]
 
-                # overcome numerical limits throwing error in kld
-                outputs_ = torch.where(outputs_ == 1, 0.999999, outputs_)
-                outputs_ = torch.where(outputs_ == 0, 0.000001, outputs_)
-                
-                torchmetrics.functional.kl_divergence(outputs_, labels_)
+                    # overcome numerical limits throwing error in kld
+                    outputs_ = torch.where(outputs_ == 1, 0.999999, outputs_)
+                    outputs_ = torch.where(outputs_ == 0, 0.000001, outputs_)
+                    
+                    torchmetrics.functional.kl_divergence(outputs_, labels_)
         
         # calculate stat_scores
         metrics['confusion'] = torchmetrics.functional.confusion_matrix(labeled_prd, labeled_tgt, num_classes=classes)

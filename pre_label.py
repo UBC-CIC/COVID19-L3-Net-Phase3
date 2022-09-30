@@ -112,8 +112,8 @@ if __name__ == '__main__':
     parser.add_argument('--verbose', '-v', type=str, default='false')
     parser.add_argument('--make_plots', type=str, default='true')
     parser.add_argument('--multi_gpu', type=str, default='true')
-    parser.add_argument('--checkpoint', type=str, default=r'model_in\phase2_model.ckpt')
-    parser.add_argument('--lung_model', type=str, default=r'model_in\unet_r231covid-0de78a7e.pth')
+    parser.add_argument('--checkpoint', type=str, default=None)
+    parser.add_argument('--lung_model', type=str, default=None)
     parser.add_argument('--point_mode', type=str, default=r'local')
     parser.add_argument('--infer_every_mm', type=int, default=10)
     parser.add_argument('--normal_lung_sz_thresh', type=int, default=0, help='<0 to disable replacing normal lung inference')
@@ -123,13 +123,10 @@ if __name__ == '__main__':
     parser.add_argument('--scheduled_start', type=str, default="")
 
     # Container environment
-    parser.add_argument('--data_path', '-d', type=str,
-                        default=os.environ.get('SM_CHANNEL_TRAINING',
-                                               r'C:\Users\Marco\PycharmProjects\cic_covid19_phase3\data_in\test_project'))
-    parser.add_argument('--model_dir', type=str, default=os.environ.get('SM_MODEL_DIR', 'model_in'))
-    parser.add_argument('--output_dir', type=str,
-                        default=os.environ.get('SM_OUTPUT_DATA_DIR', r'data_out'))
-    parser.add_argument('--log_dir', type=str, default=os.environ.get('SM_OUTPUT_DATA_DIR', 'logs'))
+    parser.add_argument('--data_path', '-d', type=str, default=None)
+    parser.add_argument('--model_dir', type=str, default=None)
+    parser.add_argument('--output_dir', type=str, default=None)
+    parser.add_argument('--log_dir', type=str, default=None)
 
     args = parser.parse_args()
     args.skip_existing = general_utils.str2bool(args.skip_existing)

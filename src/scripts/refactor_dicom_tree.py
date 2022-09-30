@@ -1,4 +1,3 @@
-from ast import arg
 import pydicom as dcm
 import os
 import shutil
