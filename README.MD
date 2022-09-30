@@ -149,6 +149,21 @@ For example, to access the GGO labels for slice 15:
     file = h5py.File('HDF5_file.hdf5','r')
     ggo = file[HDF5_file]['Parenchyma'][15,1,...]
 
+
+### Evaluation NPZ (Numpy Zipped Archive)
+When using **evaluate.py** to create visualizations, .npz files can be saved using the switch "--nii_save_npz", which will create a compressed numpy file that will have the probability outputs from the model, and the ground truth labels. This can be used later to recalculate performance and to perform statistical analysis.
+
+To load an evaluation (ex. evaluate.npz):
+
+    import numpy as np
+
+    evaluated = np.load('evaluate.npz')
+    labels = evaluated['labels']
+    outputs = evaluated['outputs']
+    SOPInstanceUIDs = evaluated['sops']
+    class_labels = dict(enumerate(evaluated['labels']))
+
+
 ### Inference NPZ (Numpy Zipped Archive)
 Inferences output by **infer.py** are compressed numpy files containing the following keys:
 - in_: The processed CT volume (N, 512, 512)
@@ -161,10 +176,10 @@ To load an inference (ex. inference.npz):
     import numpy as np
 
     inferred = np.load('inference.npz')
-    CT = inferred[in_]
-    probs = inferred[probs]
-    outputs = inferred[out_]
-    SOPInstanceUIDs = inferred[sops]
+    CT = inferred['in_']
+    probs = inferred['probs']
+    outputs = inferred['out_']
+    SOPInstanceUIDs = inferred['sops']
     class_labels = dict(enumerate(inferred['labels']))
 
 To convert a .npz inference file into separate NIFTI files (CT, Mask), the **inference_to_nii.py** script can be used.
