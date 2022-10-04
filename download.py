@@ -40,7 +40,7 @@ if __name__ == '__main__':
     required.add_argument('-o', '--output_path', type=str,
                           help='Path to store outputs. A dataset-specific folder will be created in this path. '
                                'If the path does not exist, it will be created.', required=True,
-                          default='C://Users/Marco/PycharmProjects/outputs/hdf5s/')
+                          default='')
     required.add_argument('--lung_model', type=str, default=None)
 
     optional.add_argument('-m', '--multiprocess', type=str2bool, default=True, help='Whether to use multiple processes')
