@@ -4,9 +4,6 @@ import shutil
 from tqdm import tqdm
 import argparse
 
-study_folder = 'C:\\Users\\Marco\\PycharmProjects\\cic_covid19_phase3\\data_in\\SPH\\'
-output_path = 'C:\\Users\\Marco\\PycharmProjects\\cic_covid19_phase3\\data_in\\refactoredSPH'
-
 
 def refactor_dcm_data_directory(study_folder, output_path=None, silent=False):
     dcm_files = []

@@ -241,12 +241,3 @@ class Phase3HDF5(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.data_df)
 
-
-if __name__ == '__main__':
-    df = build_data_df('E:\cic_covid19_phase3/data_out/download', 'train', holdout_size=0.2)
-    trainset = Phase3HDF5(df)    
-    for idx in range(0,len(trainset)):
-        if (trainset[idx]['image'].shape[-2]) != 512 or (trainset[idx]['image'].shape[-1]) != 512:
-            print(trainset[idx]['StudyInstanceUID'])
-            print(trainset[idx]['SeriesInstanceUID'])
-            print(trainset[idx]['SOPInstanceUID'])
