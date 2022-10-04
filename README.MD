@@ -160,9 +160,6 @@ To load an evaluation (ex. evaluate.npz):
     evaluated = np.load('evaluate.npz')
     labels = evaluated['labels']
     outputs = evaluated['outputs']
-    SOPInstanceUIDs = evaluated['sops']
-    class_labels = dict(enumerate(evaluated['labels']))
-
 
 ### Inference NPZ (Numpy Zipped Archive)
 Inferences output by **infer.py** are compressed numpy files containing the following keys:
